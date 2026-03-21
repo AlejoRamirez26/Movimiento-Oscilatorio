@@ -599,6 +599,32 @@
                 </div>
             </div>
 
+            <!-- SPREAD 1.5: Historia Expandida & Aplicaciones -->
+            <div class="spread" id="spread-1-5">
+                <div class="page left">
+                    <h2>Los Pioneros del MAS</h2>
+                    <p style="margin-bottom: 1rem;">El estudio formal del comportamiento oscilatorio fue forjado por mentes brillantes a lo largo de la historia:</p>
+                    <ul style="padding-left: 20px; font-size: 0.95rem; display: flex; flex-direction: column; gap: 8px;">
+                        <li><strong>Galileo Galilei (1564-1642):</strong> Descubrió el isocronismo del péndulo, notando que el periodo es independiente de la amplitud para oscilaciones pequeñas.</li>
+                        <li><strong>Robert Hooke (1635-1703):</strong> Formuló en 1660 la Ley de Elasticidad ($F_e = -kx$), modelando matemáticamente la fuerza restauradora en resortes.</li>
+                        <li><strong>Christiaan Huygens (1629-1695):</strong> Patentó el primer reloj de péndulo en 1656, usando las bases del MAS para reducir el error temporal diario a solo segundos.</li>
+                        <li><strong>Léon Foucault (1819-1868):</strong> Demostró la rotación de la Tierra usando un inmenso péndulo esférico armónico en el Panteón de París.</li>
+                    </ul>
+                    <div class="page-num">Página 3</div>
+                </div>
+
+                <div class="page right">
+                    <h2>Aplicaciones en Ingeniería</h2>
+                    <p style="margin-bottom: 1rem;">El MAS es el principio rector detrás del diseño de numerosas tecnologías y megaestructuras:</p>
+                    <ul style="padding-left: 20px; font-size: 0.95rem; display: flex; flex-direction: column; gap: 8px;">
+                        <li><strong>Amortiguadores Sintonizados (TMD):</strong> Rascacielos como el Taipei 101 utilizan masivos péndulos de acero para oscilar en contrafase con sismos y tornados, salvaguardando la estructura.</li>
+                        <li><strong>Sistemas de Suspensión Vehicular:</strong> Modelados como sistemas <em>masa-resorte-amortiguador</em> para absorber la energía cinética de impactos en la vía y proteger carga frágil.</li>
+                        <li><strong>Sistemas de Relojería y Metrología:</strong> Los volantes de torsión (osciladores circulares armónicos) garantizan alta precisión en dispositivos mecánicos automatizados sin componentes electrónicos.</li>
+                    </ul>
+                    <div class="page-num">Página 4</div>
+                </div>
+            </div>
+
             <!-- SPREAD 2: Teoría 2 (Izquierda) & Panel Lab (Derecha) -->
             <div class="spread" id="spread-1">
                 <!-- PÁGINA 3: Teoría 2 y Energía -->
@@ -745,9 +771,8 @@
                     </div>
 
                     <div class="graphic-container">
-                        <div style="font-weight:bold; font-size:0.95rem; margin-bottom:5px;">Energías $E$ (J) vs Tiempo
-                            $t$ (s)</div>
-                        <!-- We will draw Ek, Ep, Et lines -->
+                        <div style="font-weight:bold; font-size:0.95rem; margin-bottom:5px;">Energías $E$ (J) vs Posición $x$ (m)</div>
+                        <!-- Curvas parabólicas de Ep y Ek cruzadas -->
                         <canvas id="canvasE" width="500" height="200"></canvas>
                         <div style="font-size:0.85rem; text-align:center; margin-top:4px;">
                             <span style="color:#f59e0b; font-weight:bold;">--- Ek(Cinética)</span> &nbsp;&nbsp;
@@ -828,7 +853,10 @@
         }
 
         let currentSpread = 0;
-        const totalSpreads = 4;
+        const totalSpreads = 5;
+
+        // Auto-numerate pages
+        document.querySelectorAll('.page-num').forEach((el, idx) => el.innerText = 'Página ' + (idx + 1));
 
         const btnPrev = document.getElementById('btnPrevPage');
         const btnNext = document.getElementById('btnNextPage');
@@ -1225,7 +1253,126 @@
         const graphX = new DynamicGraph('canvasX', 'Posición', '#3b82f6', 'xList', -5, 5);
         const graphV = new DynamicGraph('canvasV', 'Velocidad', '#f59e0b', 'vList', -15, 15);
         const graphA = new DynamicGraph('canvasA', 'Aceleración', '#ef4444', 'aList', -50, 50);
-        const graphE = new DynamicGraph('canvasE', 'Energía', ['#f59e0b', '#3b82f6', '#10b981'], ['ekList', 'epList', 'etList'], -5, 100);
+
+        // GRÁFICA PARABÓLICA PERSONALIZADA (Energía vs Posición)
+        const graphE = {
+            canvas: document.getElementById('canvasE'),
+            ctx: document.getElementById('canvasE').getContext('2d'),
+            view: { xMin: -5, xMax: 5, yMin: -5, yMax: 100 },
+            defaultView: { xMin: -5, xMax: 5, yMin: -5, yMax: 100 },
+            W: 500, H: 200,
+            isDragging: false, lastMouseX: 0, lastMouseY: 0,
+            
+            attachEvents() {
+                this.canvas.addEventListener('mousedown', (e) => { this.isDragging = true; this.lastMouseX = e.clientX; this.lastMouseY = e.clientY; });
+                window.addEventListener('mouseup', () => { this.isDragging = false; });
+                this.canvas.addEventListener('mousemove', (e) => {
+                    if (!this.isDragging) return;
+                    let dx = e.clientX - this.lastMouseX; let dy = e.clientY - this.lastMouseY;
+                    let scaleX = (this.view.xMax - this.view.xMin) / this.W;
+                    let scaleY = (this.view.yMax - this.view.yMin) / this.H;
+                    this.view.xMin -= dx * scaleX; this.view.xMax -= dx * scaleX;
+                    this.view.yMin += dy * scaleY; this.view.yMax += dy * scaleY;
+                    this.lastMouseX = e.clientX; this.lastMouseY = e.clientY;
+                });
+            },
+            zoom(f) {
+                let cX = (this.view.xMin + this.view.xMax)/2, cY = (this.view.yMin + this.view.yMax)/2;
+                let dW = (this.view.xMax - this.view.xMin)*f, dH = (this.view.yMax - this.view.yMin)*f;
+                this.view.xMin = cX - dW/2; this.view.xMax = cX + dW/2;
+                this.view.yMin = cY - dH/2; this.view.yMax = cY + dH/2;
+            },
+            resetView() { this.view = {...this.defaultView}; },
+            draw() {
+                const {W,H,ctx,view} = this;
+                ctx.fillStyle = "#fff"; ctx.fillRect(0,0,W,H);
+                
+                let currentMaxA = state.A; 
+                let padding = currentMaxA * 0.5;
+                if(padding < 1) padding = 1;
+                
+                if(!this.isDragging) {
+                    this.view.xMax = currentMaxA + padding;
+                    this.view.xMin = -currentMaxA - padding;
+                    this.view.yMax = (0.5 * state.k * currentMaxA * currentMaxA) + 20;
+                    if(this.view.yMax < 10) this.view.yMax = 10;
+                }
+                
+                let scaleX = W/(view.xMax-view.xMin); 
+                let scaleY = H/(view.yMax-view.yMin);
+
+                ctx.strokeStyle = "#e5e7eb"; ctx.lineWidth = 1;
+                let sX = 1.0; let sXMin = Math.ceil(view.xMin/sX)*sX;
+                for(let x=sXMin; x<=view.xMax; x+=sX){
+                    let px = (x-view.xMin)*scaleX; ctx.beginPath(); ctx.moveTo(px,0); ctx.lineTo(px,H); ctx.stroke();
+                }
+                let sY = (view.yMax-view.yMin)/10; sY = Number(sY.toPrecision(1)); if(sY<=0) sY=1;
+                let sYMin = Math.ceil(view.yMin/sY)*sY;
+                for(let y=sYMin; y<=view.yMax; y+=sY){
+                    let py = H-(y-view.yMin)*scaleY; ctx.beginPath(); ctx.moveTo(0,py); ctx.lineTo(W,py); ctx.stroke();
+                }
+
+                ctx.strokeStyle = "#475569"; ctx.lineWidth = 2;
+                let axisY = H-(0-view.yMin)*scaleY; let axisX = (0-view.xMin)*scaleX;
+                ctx.font = "10px Calibri"; ctx.fillStyle = "#334155";
+                if(axisY>=0 && axisY<=H){
+                    ctx.beginPath(); ctx.moveTo(0,axisY); ctx.lineTo(W,axisY); ctx.stroke();
+                    for(let x=sXMin; x<=view.xMax; x+=sX){
+                        let px = (x-view.xMin)*scaleX; ctx.fillText(x.toFixed(1), px+2, axisY+12);
+                    }
+                }
+                if(axisX>=0 && axisX<=W){
+                    ctx.beginPath(); ctx.moveTo(axisX,0); ctx.lineTo(axisX,H); ctx.stroke();
+                    for(let y=sYMin; y<=view.yMax; y+=sY){
+                        let py = H-(y-view.yMin)*scaleY; if(Math.abs(y)>0.001) ctx.fillText(y.toFixed(1), axisX+4, py-4);
+                    }
+                }
+
+                // DRAW PARABOLAS 
+                ctx.lineWidth = 2;
+                let pts = 100;
+                let dx = (currentMaxA * 2) / pts;
+                
+                // Ep Parabola
+                ctx.strokeStyle = "#3b82f6"; ctx.beginPath();
+                for(let i=0; i<=pts; i++){
+                    let vx = -currentMaxA + i*dx; let vy = 0.5 * state.k * vx * vx;
+                    let px = (vx-view.xMin)*scaleX; let py = H-(vy-view.yMin)*scaleY;
+                    if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+                }
+                ctx.stroke();
+
+                // Ek Parabola
+                let Et = 0.5 * state.k * currentMaxA * currentMaxA;
+                ctx.strokeStyle = "#f59e0b"; ctx.beginPath();
+                for(let i=0; i<=pts; i++){
+                    let vx = -currentMaxA + i*dx; let vy = Et - (0.5 * state.k * vx * vx);
+                    let px = (vx-view.xMin)*scaleX; let py = H-(vy-view.yMin)*scaleY;
+                    if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+                }
+                ctx.stroke();
+
+                // Et Line
+                ctx.strokeStyle = "#10b981"; ctx.beginPath();
+                ctx.moveTo((-currentMaxA-view.xMin)*scaleX, H-(Et-view.yMin)*scaleY);
+                ctx.lineTo((currentMaxA-view.xMin)*scaleX, H-(Et-view.yMin)*scaleY);
+                ctx.stroke();
+
+                // Draw Current State DOTS
+                let cx = state.x;
+                let curEp = 0.5 * state.k * cx * cx;
+                let curEk = 0.5 * state.m * state.v * state.v;
+                
+                let dpx = (cx-view.xMin)*scaleX;
+                // Dot Ep
+                let dpEp = H-(curEp-view.yMin)*scaleY;
+                ctx.fillStyle = "#3b82f6"; ctx.beginPath(); ctx.arc(dpx, dpEp, 6, 0, Math.PI*2); ctx.fill();
+                // Dot Ek
+                let dpEk = H-(curEk-view.yMin)*scaleY;
+                ctx.fillStyle = "#f59e0b"; ctx.beginPath(); ctx.arc(dpx, dpEk, 6, 0, Math.PI*2); ctx.fill();
+            }
+        };
+        graphE.attachEvents();
 
         // Core Engine Loop
         let lastTime = performance.now();
@@ -1278,7 +1425,7 @@
         });
 
         const chatHistory = [
-            { "role": "system", "content": "Eres Galileo Galilei, el padre de la ciencia moderna. Estás ayudando a unos estudiantes de ingeniería industrial con su Cuaderno Interactivo sobre el Movimiento Armónico Simple (MAS). Responde siempre en español. Adopta un tono histórico, sabio, inspirador y amable. Tus respuestas deben ser completas pero concisas (máximo 2 párrafos cortos). MUY IMPORTANTE: Cuando menciones ecuaciones o variables, DEBES escribirlas siempre en formato LaTeX encerrado entre símbolos de doble dólar, por ejemplo: $$E_k = \\frac{1}{2}mv^2$$." }
+            { "role": "system", "content": "Eres Galileo Galilei, el padre de la ciencia moderna. Estás ayudando a estudiantes de ingeniería industrial que usan su Cuaderno Interactivo sobre el Movimiento Armónico Simple (MAS). El cuaderno comprende: principios (elongación, amplitud $A$, periodo $T$, frecuencia $f$), Ley de Hooke ($F_e=-kx$), ecuaciones cinemáticas con derivadas temporales, conservación de la Energía ($E_k$ cinética, $E_p$ potencial elástica y $E_t$ total como parábolas) y aplicaciones en la ingeniería (como Amortiguadores de masa sintonizada TMD). \n\nInstrucciones de comportamiento:\n1. Tono histórico, amable y muy pedagógico, al estilo Renacentista.\n2. **Resolución de problemas**: Si el usuario te envía un ejercicio o problema, resuélvelo impecablemente PASO A PASO. Declara primero los 'Datos', luego las 'Fórmulas', el 'Desarrollo matemático' y concluye con el 'Resultado' expresado en unidades del SI.\n3. **LaTeX Riguroso**: Cualquier fórmula, variable física, desarrollo matemático o ecuación DEBE estar formateado en LaTeX usando sintaxis de doble dólar. Ejemplo: $$f = \\frac{1}{2\\pi}\\sqrt{\\frac{k}{m}}$$.\n4. Sé analítico y no inventes leyes de la física. Tus respuestas deben ser completas pero bien estructuradas." }
         ];
 
         function addMessage(text, sender) {
